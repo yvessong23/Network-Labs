@@ -32,23 +32,73 @@
 | CoreSW2         | GiX/X (example)    | Access-SW2    | GiX/X             | 999             | 30,50,99,999               |
 
 
-## IP Addressing Table
+## IP Addressing – Per Device
 
-| **Device**         | **Interface**  | **IP Address / Prefix** | **VLAN / Subnet** | **Purpose / Notes**                 |
-|--------------------|----------------|-------------------------|-------------------|--------------------------------------|
-| INET-EDGE Router   | G0/0           | 203.0.113.1 /30         | —                 | Internet gateway toward ISP         |
-| Firewall-Primary   | G0/0 (outside) | 203.0.113.2 /30         | —                 | Outside interface to edge router    |
-| Firewall-Primary   | G0/1.10        | 10.100.0.1 /24          | VLAN 10           | WEB-ZONE gateway                     |
-| Firewall-Primary   | G0/1.20        | 10.200.0.1 /24          | VLAN 20           | APP-ZONE gateway                     |
-| Firewall-Primary   | G0/1.30        | 10.30.0.1 /24           | VLAN 30           | DB-ZONE gateway                      |
-| Firewall-Primary   | G0/1.50        | 10.40.0.1 /24           | VLAN 50           | USER-ZONE gateway                    |
-| Firewall-Primary   | G0/1.99        | 10.99.0.1 /24           | VLAN 99           | MGMT-ZONE gateway                    |
-| CoreSW1            | G0/0           | 10.1.1.1 /30            | Infra link         | OSPF Area 0 to CoreSW2               |
-| CoreSW1            | VLAN 99 (SVI)  | 10.99.0.2 /24           | VLAN 99           | Mgmt IP                              |
-| CoreSW2            | G0/0           | 10.1.1.2 /30            | Infra link         | OSPF Area 0 to CoreSW1               |
-| CoreSW2            | VLAN 99 (SVI)  | 10.99.0.3 /24           | VLAN 99           | Mgmt IP                              |
-| PC-WEB (PC1)       | E0             | 10.100.0.10 /24         | VLAN 10           | nginx web server                     |
-| PC2 (APP)          | E0             | 10.200.0.10 /24         | VLAN 20           | Flask application server             |
-| PC3 (DB)           | E0             | 10.30.0.10 /24          | VLAN 30           | PostgreSQL database                  |
-| CLIENT-PC4         | E0             | DHCP                    | VLAN 50           | End-user client                      |
-| CLIENT-PC5         | E0             | DHCP                    | VLAN 50           | End-user client                      |
+### INET-EDGE Router
+| **Interface** | **IP Address / Prefix** | **Purpose / Notes**        |
+|---------------|-------------------------|----------------------------|
+| G0/0          | 203.0.113.1 /30         | Internet gateway toward ISP |
+
+---
+
+### Firewall-Primary
+| **Interface**   | **IP Address / Prefix** | **VLAN / Zone** | **Purpose / Notes**         |
+|-----------------|-------------------------|-----------------|-----------------------------|
+| G0/0 (outside)  | 203.0.113.2 /30         | —               | Outside to edge router      |
+| G0/1.10         | 10.100.0.1 /24          | VLAN 10 – WEB   | Gateway for WEB-ZONE        |
+| G0/1.20         | 10.200.0.1 /24          | VLAN 20 – APP   | Gateway for APP-ZONE        |
+| G0/1.30         | 10.30.0.1 /24           | VLAN 30 – DB    | Gateway for DB-ZONE         |
+| G0/1.50         | 10.40.0.1 /24           | VLAN 50 – USER  | Gateway for USER-ZONE       |
+| G0/1.99         | 10.99.0.1 /24           | VLAN 99 – MGMT  | Gateway for MGMT-ZONE       |
+
+---
+
+### CoreSW1
+| **Interface** | **IP Address / Prefix** | **VLAN / Network** | **Purpose / Notes**        |
+|---------------|-------------------------|--------------------|----------------------------|
+| G0/0          | 10.1.1.1 /30            | Infra link to CoreSW2 | OSPF Area 0 peer         |
+| VLAN 99 (SVI) | 10.99.0.2 /24            | MGMT-ZONE          | Mgmt IP for infra control  |
+
+---
+
+### CoreSW2
+| **Interface** | **IP Address / Prefix** | **VLAN / Network** | **Purpose / Notes**        |
+|---------------|-------------------------|--------------------|----------------------------|
+| G0/0          | 10.1.1.2 /30            | Infra link to CoreSW1 | OSPF Area 0 peer         |
+| VLAN 99 (SVI) | 10.99.0.3 /24            | MGMT-ZONE          | Mgmt IP for infra control  |
+
+---
+
+### PC-WEB (PC1)
+| **Interface** | **IP Address / Prefix** | **VLAN / Zone** | **Purpose / Notes**   |
+|---------------|-------------------------|-----------------|-----------------------|
+| E0            | 10.100.0.10 /24         | VLAN 10 – WEB   | nginx web server      |
+
+---
+
+### PC2 (APP)
+| **Interface** | **IP Address / Prefix** | **VLAN / Zone** | **Purpose / Notes**     |
+|---------------|-------------------------|-----------------|-------------------------|
+| E0            | 10.200.0.10 /24         | VLAN 20 – APP   | Flask application server |
+
+---
+
+### PC3 (DB)
+| **Interface** | **IP Address / Prefix** | **VLAN / Zone** | **Purpose / Notes**     |
+|---------------|-------------------------|-----------------|-------------------------|
+| E0            | 10.30.0.10 /24          | VLAN 30 – DB    | PostgreSQL database     |
+
+---
+
+### CLIENT-PC4
+| **Interface** | **IP Address / Prefix** | **VLAN / Zone** | **Purpose / Notes** |
+|---------------|-------------------------|-----------------|---------------------|
+| E0            | DHCP                    | VLAN 50 – USER  | End-user client     |
+
+---
+
+### CLIENT-PC5
+| **Interface** | **IP Address / Prefix** | **VLAN / Zone** | **Purpose / Notes** |
+|---------------|-------------------------|-----------------|---------------------|
+| E0            | DHCP                    | VLAN 50 – USER  | End-user client     |
+
