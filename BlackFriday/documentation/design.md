@@ -48,6 +48,8 @@
 | CoreSW1 (G0/0) | CoreSW2 (G0/0) | 10.1.1.0/30     | 0        | Core interconnect           | None     |
 | CoreSW1 (VLAN99 SVI) | Firewall (VLAN99) | 10.99.0.0/24 | 0 | Mgmt reachability (optional) | None     |
 
+---
+Firewall-Primary Security Levels & IP
 
 | **Interface**      | **IP Address / Prefix** | **VLAN / Zone** | **Purpose / Notes**               | **Security Level** |
 | ------------------ | ----------------------- | --------------- | --------------------------------- | ------------------ |
