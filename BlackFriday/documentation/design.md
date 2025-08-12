@@ -49,15 +49,15 @@
 | CoreSW1 (VLAN99 SVI) | Firewall (VLAN99) | 10.99.0.0/24 | 0 | Mgmt reachability (optional) | None     |
 
 
-### Firewall-Primary
-| **Interface**   | **IP Address / Prefix** | **VLAN / Zone** | **Purpose / Notes**         |
-|-----------------|-------------------------|-----------------|-----------------------------|
-| G0/0 (outside)  | 203.0.113.2 /30         | —               | Outside to edge router      |
-| G0/1.10         | 10.100.0.1 /24          | VLAN 10 – WEB   | Gateway for WEB-ZONE        |
-| G0/1.20         | 10.200.0.1 /24          | VLAN 20 – APP   | Gateway for APP-ZONE        |
-| G0/1.30         | 10.30.0.1 /24           | VLAN 30 – DB    | Gateway for DB-ZONE         |
-| G0/1.50         | 10.40.0.1 /24           | VLAN 50 – USER  | Gateway for USER-ZONE       |
-| G0/1.99         | 10.99.0.1 /24           | VLAN 99 – MGMT  | Gateway for MGMT-ZONE       |
+| **Interface**      | **IP Address / Prefix** | **VLAN / Zone** | **Purpose / Notes**               | **Security Level** |
+| ------------------ | ----------------------- | --------------- | --------------------------------- | ------------------ |
+| **G0/0 (outside)** | 203.0.113.2 /30         | —               | Outside to edge router (Internet) | **0**              |
+| **G0/1.10**        | 10.100.0.1 /24          | VLAN 10 – WEB   | Gateway for WEB-ZONE              | **40**             |
+| **G0/1.20**        | 10.200.0.1 /24          | VLAN 20 – APP   | Gateway for APP-ZONE              | **30**             |
+| **G0/1.30**        | 10.30.0.1 /24           | VLAN 30 – DB    | Gateway for DB-ZONE               | **20**             |
+| **G0/1.50**        | 10.40.0.1 /24           | VLAN 50 – USER  | Gateway for USER-ZONE             | **50**             |
+| **G0/1.99**        | 10.99.0.1 /24           | VLAN 99 – MGMT  | Gateway for MGMT-ZONE             | **90**             |
+
 
 ---
 
