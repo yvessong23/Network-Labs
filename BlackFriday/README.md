@@ -45,4 +45,4 @@ Visibility → syslog, ACL counters, NAT debugging.
 ---
 
 ## ✨ What Makes This Special
-**I built this lab because I believe the network is the first defense of cyber. Every config, every ACL, every NAT rule has a why. This isn’t just practice — it’s preparation for the day I’m the one designing real enterprise networks.**
+**I built this lab because I believe the network is the first defense of cyber. Every config, every ACL, every NAT rule has a why. This isn’t just practice, it’s preparation for the day I’m the one designing real enterprise networks.**
