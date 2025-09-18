@@ -1,6 +1,6 @@
 # 🛰️ Network-Labs
 
-This repository contains enterprise-grade **network lab designs, documentation, and automation**.  
+Zero Trust network architecture, built at home from scratch. Every lab is a step toward designing networks at the scale of Fortune 500 enterprises. Documented with configs, diagrams, and crisis scenarios. 
 
 ---
 
@@ -12,13 +12,15 @@ This repository contains enterprise-grade **network lab designs, documentation, 
 ---
 
 ## 🛠 Skills Demonstrated
-- Zero Trust security design and segmentation  
-- Stateful firewall configuration (ACLs, NAT, inspection policies)  
-- DHCP relay and DNS forwarder integration (*Bind9 on Alpine Linux*)  
-- OSPF infrastructure design and troubleshooting  
-- Policy-Based Routing (PBR) for security enforcement  
-- NAT and double-NAT across firewall/edge layers  
-- Enterprise documentation and syslog analysis  
+Zero Trust segmentation → the philosophy.
+
+Firewall enforcement (ACLs, NAT, inspection) → the guardrails.
+
+DNS/DHCP resilience → the foundation no one talks about.
+
+OSPF + PBR → advanced routing for security inspection.
+
+Visibility → syslog, ACL counters, NAT debugging.
 
 ---
 
@@ -27,7 +29,7 @@ This repository contains enterprise-grade **network lab designs, documentation, 
 - **Security Zones:** 5-tier model *(User, Web, App, DB, Mgmt)*  
 - **Advanced Routing:** PBR forcing security inspection before forwarding  
 - **Enterprise Scale:** Dual-core switch design with ASA firewall at enforcement points  
-- **Visibility:** Syslog, ACL hit-counts, and NAT translation tracking  
+- **Visibility:** Syslog, ACL hit-counts, and NAT translation tracking
 
 ---
 
@@ -43,7 +45,4 @@ This repository contains enterprise-grade **network lab designs, documentation, 
 ---
 
 ## ✨ What Makes This Special
-- Real-world enterprise architecture recreated in **Cisco Modeling Labs (CML)**  
-- DNS, DHCP, NAT, and firewall policies integrated with segmentation  
-- Layered Zero Trust enforcement with scoped ACLs and least-privilege design  
-- Serves as a showcase for **advanced troubleshooting and enterprise thinking**  
+**I built this lab because I believe the network is the first defense of cyber. Every config, every ACL, every NAT rule has a why. This isn’t just practice — it’s preparation for the day I’m the one designing real enterprise networks.**
