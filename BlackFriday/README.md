@@ -1,58 +1,48 @@
-# Network-Labs
-This is a repository for my network labs, scenarios, documentation, scripts, and automation
+# 🛰️ Network-Labs
 
-# Hybrid Enterprise Architecture - Zero Trust Security Crisis
-**Scenario:** Fortune 500 company's hybrid OSPF/Zero Trust network experiencing critical security and performance failures
-**Challenge:** Diagnose and resolve 5 advanced network failures that bypass security controls
-**Architecture:** Enterprise design combining OSPF infrastructure with Zero Trust firewall segmentation
+Zero Trust network architecture, built at home from scratch. Every lab is a step toward designing networks at the scale of Fortune 500 enterprises. Documented with configs, diagrams, and crisis scenarios. 
 
-## Skills Demonstrated
-- Advanced enterprise troubleshooting
-- Zero Trust security implementation  
-- Policy-Based Routing (PBR)
-- Stateful firewall architecture
-- OSPF and redundancy design
-- Business impact analysis
+---
 
-## Quick Start
-[Lab build in progress - full configs coming soon]
+## 🔒 Hybrid Enterprise Architecture — Zero Trust Security Lab
 
-## The Architecture
-- **Hybrid Design:** OSPF for infrastructure, Zero Trust for user traffic
-- **Security Zones:** 5-tier security model with granular policies
-- **Advanced Routing:** PBR forcing security inspection
-- **Enterprise Scale:** Dual-core redundancy with firewall HA
+**Scenario:** Simulated Fortune 500 hybrid OSPF/Zero Trust network.  
+**Goal:** Build and test a segmented enterprise network with firewalls, core routing, DHCP/DNS services, and end-to-end policy enforcement.  
 
-## The Crisis Scenarios
+---
 
-### 1. Asymmetric Routing Nightmare
-- **Impact:** All user sessions dropping randomly
-- **Cause:** Stateful firewall losing connection state
-- **Business Loss:** Complete application failure
+## 🛠 Skills Demonstrated
+Zero Trust segmentation → the philosophy.
 
-### 2. Security Zone Bypass
-- **Impact:** Database directly accessible from app tier
-- **Cause:** Rogue SVI bypassing firewall inspection  
-- **Business Loss:** Compliance violation, data breach risk
+Firewall enforcement (ACLs, NAT, inspection) → the guardrails.
 
-### 3. TCP MSS Black Hole
-- **Impact:** Large transactions failing, small ones work
-- **Cause:** MTU mismatch through firewall path
-- **Business Loss:** Big orders can't complete
+DNS/DHCP resilience → the foundation no one talks about.
 
-### 4. PBR Loop of Death
-- **Impact:** Core switches at 100% CPU
-- **Cause:** Misconfigured policy routing
-- **Business Loss:** Entire network degradation
+OSPF + PBR → advanced routing for security inspection.
 
-### 5. DHCP Amplification 
-- **Impact:** Users can't connect, IPs exhausted
-- **Cause:** Broadcast storm + DHCP relay issue
-- **Business Loss:** No new user sessions
+Visibility → syslog, ACL counters, NAT debugging.
 
-## What Makes This Special
-- Real-world hybrid architecture
-- Security + networking integration
-- Multiple failure domains
-- Cascading problems that interact
-- Demonstrates senior-level thinking
+---
+
+## 🏗 The Architecture
+- **Hybrid Design:** OSPF for core infrastructure, Zero Trust for user traffic  
+- **Security Zones:** 5-tier model *(User, Web, App, DB, Mgmt)*  
+- **Advanced Routing:** PBR forcing security inspection before forwarding  
+- **Enterprise Scale:** Dual-core switch design with ASA firewall at enforcement points  
+- **Visibility:** Syslog, ACL hit-counts, and NAT translation tracking
+
+---
+
+## 🚨 Crisis Scenarios *(To Be Built Out)*
+1. **Asymmetric Routing Nightmare**  
+2. **Security Zone Bypass**  
+3. **TCP MSS Black Hole**  
+4. **PBR Loop of Death**  
+5. **DHCP Amplification**  
+
+*(Documented, not yet implemented — these will be added as labs progress.)*  
+
+---
+
+## ✨ What Makes This Special
+**I built this lab because I believe the network is the first defense of cyber. Every config, every ACL, every NAT rule has a why. This isn’t just practice, it’s preparation for the day I’m the one designing real enterprise networks.**
