@@ -1,1 +1,107 @@
+Access-SW1#show running-config 
+Building configuration...
 
+Current configuration : 4060 bytes
+!
+! Last configuration change at 04:20:13 UTC Wed Sep 24 2025
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+service compress-config
+!
+hostname Access-SW1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+logging buffered warnings
+logging console warnings
+!
+no aaa new-model
+no process cpu extended history
+no process cpu autoprofile hog
+!         
+!         
+!         
+ip dhcp snooping vlan 10,50
+no ip dhcp snooping information option
+ip dhcp snooping
+ip cef    
+no ipv6 cef
+!         
+!         
+!         
+spanning-tree mode rapid-pvst
+spanning-tree portfast edge default
+spanning-tree portfast edge bpduguard default
+spanning-tree extend system-id
+!         
+vlan dot1q tag native 
+no cdp run
+!         
+!        
+!         
+interface GigabitEthernet0/0
+ switchport access vlan 10
+ switchport mode access
+ switchport port-security mac-address sticky
+ switchport port-security mac-address sticky 5254.00d1.5dfc
+ switchport port-security
+ negotiation auto
+ no cdp enable
+!         
+interface GigabitEthernet0/1
+ switchport access vlan 20
+ switchport mode access
+ switchport port-security mac-address sticky
+ switchport port-security mac-address sticky 5254.00e0.52c6
+ switchport port-security
+ negotiation auto
+ no cdp enable
+ ip dhcp snooping trust
+!         
+interface GigabitEthernet0/2
+ switchport trunk allowed vlan 10,20,30,50,99
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 999
+ switchport mode trunk
+ negotiation auto
+ no cdp enable
+!         
+interface GigabitEthernet0/3
+ switchport trunk allowed vlan 10,20,30,50,99
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 999
+ switchport mode trunk
+ negotiation auto
+ no cdp enable
+ ip dhcp snooping limit rate 50
+ ip dhcp snooping trust
+!         
+interface GigabitEthernet1/0
+ switchport access vlan 50
+ switchport mode access
+ switchport port-security mac-address sticky
+ switchport port-security mac-address sticky 5254.0063.37df
+ switchport port-security aging time 5
+ switchport port-security
+ negotiation auto
+ no cdp enable
+!         
+ip forward-protocol nd
+!         
+ip http server
+ip http secure-server
+!         
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!         
+!         
+no service-routing capabilities-manager
+!         
+    
+control-plane
+!         
