@@ -25,6 +25,23 @@ Goal: Build and test a segmented enterprise network with firewalls, core routing
 
 ---
 
+## Devices Used
+
+- **ASA Firewall (ASAv):** Cisco Adaptive Security Virtual Appliance (primary enforcement point)  
+- **Edge Router (IOSv):** Cisco IOSv Virtual Router Platform (Internet edge)  
+- **Core Switching (IOSvL2):** Cisco IOSv-L2 Virtual Switch Platform (dual-core backbone with OSPF + VLAN trunks)  
+- **Access Switching (IOSvL2):** Segmentation for User, Web, App, DB, Mgmt VLANs  
+- **Servers (Alpine Linux):**  
+  - Web Server (Nginx, reverse proxy to App)  
+  - App Server (Flask API, connects to DB)  
+  - Database Server (Postgres, bookings schema)  
+  - Management Server (DNS, syslog)  
+- **Clients (Alpine Linux):** Test endpoints for User zone  
+- **External Connector:** Provides simulated Internet access  
+
+
+---
+
 ## Architecture
 
 - Hybrid Design: OSPF for internal routing, Zero Trust for user traffic  
