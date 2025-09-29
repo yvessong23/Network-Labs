@@ -50,4 +50,4 @@ Documented but not yet implemented. These scenarios will be added as the lab dev
 This lab is built on the belief that the network is the first line of cyber defense.  
 Every configuration, ACL, and NAT rule is intentional.  
 
-This is not just practice — it is preparation for designing real enterprise networks.
+This is not just practice — it is preparation for designing real enterprise networks. 
