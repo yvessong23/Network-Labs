@@ -11,7 +11,7 @@ All work is documented with configurations, diagrams, and crisis scenarios.
 Scenario: A simulated Fortune 500 hybrid OSPF/Zero Trust network.  
 Goal: Build and test a segmented enterprise network with firewalls, core routing, DHCP/DNS services, and end-to-end policy enforcement.  
 
-https://github.com/yvessong23/Network-Labs/blob/f1a5c1fbf36b40587a2f1621866d5ceecdd10a22/BlackFriday/Lab-Evidence/Topology/cml-topology.png
+![Lab Topology](BlackFriday/Lab-Evidence/Topology/cml-topology.png)
 
 ---
 
