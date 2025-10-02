@@ -1,4 +1,4 @@
-# Network-Labs
+# Network-Lab/Zero-Trust
 
 Zero Trust network architecture, built at home from scratch.  
 Each lab is a step toward designing networks at the scale of Fortune 500 enterprises.  
