@@ -54,42 +54,36 @@ def command_to_server(cml_connect):
                 continue;
             print("Found Black Friday Scenario")
             
-            #position_idx = current_line.find(CORESW1) # Loop through device list until found, else return false
-             
-            #if position_idx >= 0:
             for device in devices:
                 node_name = device["node"]
                 if node_name in current_line:
-                    print("Found CoreSW1..")
-                    print("Opening CoreSW1...")
+                    print(f"Found {node_name}..")
+                    print(f"Opening {node_name}...")
                     cml_connect.send_command_timing(f"open /Black Friday Scenario/{node_name}/0", read_timeout=600) # Once the device exists
-                    time.sleep(2)
-                    
-                    cml_connect.write_channel("en")
-                    cml_connect.write_channel("\n")
-                    time.sleep(1)
+                    return node_name
 
-                    redispatch(cml_connect, device_type="cisco_ios", session_prep=False) # This is crucial, connect handler expects a terminal CLI, but since we've switches devices, its important to redispatch to the cisco driver
-                
-                    cml_connect.send_command("terminal length 0", expect_string=r"[>#]")
-                    output = cml_connect.send_command("show running-config", expect_string=r"[>#]", read_timeout=30)
-                
-                    print(output)
-                    return output
-
-                #prompt = cml_connect.find_prompt()
-                #print(f"On device prompt: {prompt}")
-                #cml_connect.send_command("terminal length 0", expect_string=r"[>#]")
-                #cml_connect.find_prompt(delay_factor=1)
     except Exception as err:
         print(f"Failed to write prompt to {CML_SERVER['host']}..")
         return None
-
     print("Could not find CoreSW1")
     return False
+
+def get_running_config(cml_connect):
+    buf = cml_connect.read_channel()
+    toggle_str = "Press RETURN"
+    
+    if toggle_str in buf:
+        cml_connect.write_channel("\r")
+        cml_connect.write_channel("en")
+    
+    redispatch(cml_connect, device_type="cisco_ios", session_prep=False) # Redispatching allows us to change Netmiko class to Cisco CLI
+    cml_connect.send_command("terminal length 0")
+    output = cml_connect.send_command("show running-config", expect_string=r"[>#]", read_timeout=500)
+    return output
+
 
 if  __name__ == "__main__":
     conn = connect_to_server()
     if conn is not None:
-        command_to_server(conn)
-
+        node = command_to_server(conn)
+        output = get_running_config(conn)

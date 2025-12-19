@@ -15,7 +15,7 @@ import time
 # any update that follows after
 
 current_time = datetime.now()
-formatted_time = current_time.strftime("%Y/%m/%d %H:%M:%S")
+formatted_time = current_time.strftime("%Y-%m-%d_%H:%M:%S")
 print(formatted_time)
 
 
@@ -78,31 +78,47 @@ def get_running_config(cml_connect):
 
 def save_config(output, node):
     # check if filePath exists, find filePath for device
-    network_path = f"network_backups/{node}"
+    network_path = f"network-automation/network_backups/{node}"
     #for root, dirs, files in os.walk("."):
     #for direct in dirs:
     if os.path.isdir(network_path):
         print(f"The directory {network_path} exists!")
         working_dir = os.chdir(network_path) # Change directory
         print(f"Current directory {os.getcwd()}")
-        file_path = formatted-time
-        if os.path.exists(path):
-            print(f"{file_path} exists!")
-        else:
-            with open(file_path, 'w') as fp:
-                fp.write()
-
+        try:
+            file_path = formatted_time+".png" # Files named by most recent time
+            with open(file_path, 'w') as fp:  # write config
+                fp.write(output)
+                print("File created successfully")
+        except FileExistsError:
+            print("This {file_path} exists!")
     else: 
         print(f"The directory {network_path} does not exist")
-    #return output
-    # create file based on date
-    # write to disk
+    return file_path
 
+def parse_config(file_path):
+    try: 
+        with open(file_path, "r") as fp:
+            interface_dict = dict()
+            content = fp.read()
+            if content == "interface":
+                interface = content
+                return print(interface)
+               # for line in content:
+                #    interface_dict[interface] = line
+
+                    
+
+    except FileNotFoundError:
+        print("{file_path} not found!")
+        return
 
 if  __name__ == "__main__":
     conn = connect_to_server()
     if conn is not None:
         node = command_to_server(conn)
-       # time.sleep(2)
+        #time.sleep(2)
         output = get_running_config(conn)
-        save_config(output, node)
+        file_path = save_config(output, node)
+        parse_config(file_path)
+        
