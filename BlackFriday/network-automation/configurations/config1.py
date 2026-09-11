@@ -15,14 +15,13 @@ import time
 # any update that follows after
 
 current_time = datetime.now()
-formatted_time = current_time.strftime("%Y/%m/%d %H:%M:%S")
+formatted_time = current_time.strftime("%Y-%m-%d_%H:%M:%S")
 print(formatted_time)
 
 
 # 3. CREATE FUNCTIONS FOR CONNECTION ACCESS
 # At this point, I could do everything in a try-catch block, but let's
 # be a little more organized and modular 
-
 # The first function will allow me to connect to the remote CML server
 
 def connect_to_server():
@@ -39,8 +38,7 @@ def connect_to_server():
 # Since I know the format, I begin with parsing
 # This is where I will be sending commands to the actual CML server
 
-def command_to_server(cml_connect):
-    
+def command_to_server(cml_connect):    
     # View Device list, 
     # It's important to do this as I may be sending commands to a device thats doesnt exist
     try:
@@ -54,36 +52,76 @@ def command_to_server(cml_connect):
                 continue;
             print("Found Black Friday Scenario")
             
+            #if position_idx >= 0:
             for device in devices:
                 node_name = device["node"]
                 if node_name in current_line:
-                    print(f"Found {node_name}..")
-                    print(f"Opening {node_name}...")
+                    print("Found CoreSW1..")
+                    print("Opening CoreSW1...")
                     cml_connect.send_command_timing(f"open /Black Friday Scenario/{node_name}/0", read_timeout=600) # Once the device exists
-                    return node_name
-
+                    print(f"Connected to {node_name}")
+                    return node_name 
     except Exception as err:
         print(f"Failed to write prompt to {CML_SERVER['host']}..")
         return None
-    print("Could not find CoreSW1")
+
+    print("Could not find {node_name}")
     return False
 
 def get_running_config(cml_connect):
-    buf = cml_connect.read_channel()
-    toggle_str = "Press RETURN"
-    
-    if toggle_str in buf:
-        cml_connect.write_channel("\r")
-        cml_connect.write_channel("en")
-    
+    cml_connect.write_channel("\r")
+    cml_connect.write_channel("en")
     redispatch(cml_connect, device_type="cisco_ios", session_prep=False) # Redispatching allows us to change Netmiko class to Cisco CLI
     cml_connect.send_command("terminal length 0")
-    output = cml_connect.send_command("show running-config", expect_string=r"[>#]", read_timeout=500)
+    output = cml_connect.send_command("show running-config", expect_string=r"[>#]") 
     return output
 
+def save_config(output, node):
+    # check if filePath exists, find filePath for device
+    network_path = f"network-automation/network_backups/{node}"
+    #for root, dirs, files in os.walk("."):
+    #for direct in dirs:
+    if os.path.isdir(network_path):
+        print(f"The directory {network_path} exists!")
+        working_dir = os.chdir(network_path) # Change directory
+        print(f"Current directory {os.getcwd()}")
+        try:
+            file_path = formatted_time+".png" # Files named by most recent time
+            with open(file_path, 'w') as fp:  # write config
+                fp.write(output)
+                print("File created successfully")
+        except FileExistsError:
+            print("This {file_path} exists!")
+    else: 
+        print(f"The directory {network_path} does not exist")
+    return file_path
+
+def parse_config(file_path):
+    try: 
+        with open(file_path, "r") as fp:
+            interface_dict = dict()
+            interface = None
+            line_stripped = [line.strip() for line in fp]
+
+            for line in line_stripped:
+                if "interface" in line:
+                    interface = line
+                    interface_dict[interface] = []
+                elif "!" in line:
+                    interface = None
+                elif interface != None:
+                    inteface_dict[interface].append(line)
+
+    except FileNotFoundError:
+        print("{file_path} not found!")
+        return
 
 if  __name__ == "__main__":
     conn = connect_to_server()
     if conn is not None:
         node = command_to_server(conn)
+        #time.sleep(2)
         output = get_running_config(conn)
+        file_path = save_config(output, node)
+        parse_config(file_path)
+        
