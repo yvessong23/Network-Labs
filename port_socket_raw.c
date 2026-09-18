@@ -20,6 +20,27 @@ typedef struct iphdr {
     uint32_t daddr;          // Destination IP Address (32-bit unsigned int)
 } iphdr;
 
+ typedef struct tcphdr{
+    uint16_t src_port;      /* source port */
+    uint16_t dest_port;     /* destination port */
+    uint32_t seq;           /* sequence number */
+    uint32_t ack;           /* acknowledgement number */
+    uint8_t th_x2:4;        /* (unused) */
+    uint8_t th_off:4;       /* data offset */
+    # endif
+    uint8_t flags;
+    # define TH_FIN 0x01
+# define TH_SYN 0x02        synchronize
+# define TH_RST 0x04        reset
+# define TH_PUSH        0x08
+# define TH_ACK 0x10
+# define TH_URG 0x20
+    uint16_t th_win;        /* window */
+    uint16_t th_sum;        /* checksum */
+    uint16_t th_urp;        /* urgent pointer */
+} tcphdr;
+
+
 void create_iphdr(int id_count){ 
     iphdr *h = malloc(sizeof(iphdr));
     h->version = 4;
