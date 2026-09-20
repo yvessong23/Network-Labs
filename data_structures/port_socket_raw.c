@@ -1,0 +1,95 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+
+typedef struct iphdr {
+    // These two share the first byte (8 bits total)
+    unsigned int version:4;  // Must be 4 for IPv4, for Routers
+    unsigned int ihl:4;      // Internet Header Length (usually 5)
+
+    uint8_t  tos;            // Type of Service, aka Differentiated Services Code Point 
+    uint16_t tot_len;        // Total Length of the packet
+    uint16_t id;             // Identification
+    uint16_t frag_off;       // Fragment Offset & Flags
+    uint8_t  ttl;            // Time to Live
+    uint8_t  protocol;       // Protocol (e.g., 6 for TCP, 17 for UDP) for OS
+    uint16_t check;          // Header Checksum
+    uint32_t saddr;          // Source IP Address (32-bit unsigned int)
+    uint32_t daddr;          // Destination IP Address (32-bit unsigned int)
+} iphdr;
+
+ typedef struct tcphdr{
+    uint16_t src_port;      /* source port */
+    uint16_t dst_port;     /* destination port */
+    uint32_t seq;           /* sequence number */
+    uint32_t ack;           /* acknowledgement number */
+    uint8_t th_x2:4;        /* (unused) */
+    uint8_t th_off:4;       /* data offset */
+    uint8_t flags;
+    # define TH_FIN 0x01
+    # define TH_SYN 0x02        
+    # define TH_RST 0x04        
+    # define TH_PUSH 0x08
+    # define TH_ACK 0x10
+    # define TH_URG 0x20
+    uint16_t th_win;        /* window */
+    uint16_t th_sum;        /* checksum */
+    uint16_t th_urp;        /* urgent pointer */
+} tcphdr;
+
+tcphdr *create_tcphdr(){
+    // src port, dst port from where? Can do a for loop
+    tcphdr *t = malloc(sizeof(tcphdr));
+    t->src_port = htons(1024 + (rand() % 64000));
+    t->dst_port = htons(1024 + (rand() % 64000));
+    t->seq = htonl(1024 + (rand() % 64000));
+    t->ack = 0;
+    t->th_x2 = 0;
+    t->flags = TH_SYN;
+    t->th_win = htons(64000);
+    t->th_sum = 0;
+    t->th_urp = 0;
+    return t;
+}
+
+iphdr *create_iphdr(int id_count){ 
+    iphdr *h = malloc(sizeof(iphdr));
+    h->version = 4;
+    h->ihl = 5;
+    h->tos = 0;
+    h->tot_len = 40;
+    h->id = id_count;
+    h->frag_off = 0;
+    h->ttl = 64;
+    h->protocol = 6;
+    h->check = 0;
+    h->saddr = inet_pton(AF_INET, "10.0.0.2", &h->daddr); // error check if != -1
+    h->daddr = inet_pton(AF_INET, "192.168.4.33", &h->daddr); // error check if != -1
+    return h;
+}
+
+
+int main(){
+	struct sockaddr_in addr;
+	//addr.sin_family = AF_INET;
+	//addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	for (int i = 1024; i < 2070; i++){
+		int fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+		if (fd < 0){
+			perror("Could not open socket!\n");
+			exit(1);
+	    }
+	
+    // addr.sin_port = htons(i);
+        if(connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == 0){
+            printf("Connected to port %d\n", i);
+            close(fd);
+        } else {
+            close(fd);
+        }
+    }
+}
