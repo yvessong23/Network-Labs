@@ -41,6 +41,19 @@ typedef struct iphdr {
     uint16_t th_urp;        /* urgent pointer */
 } tcphdr;
 
+typedef struct master_hdr{
+    iphdr *iphdr;
+    tcphdr *tcphdr;
+} master_hdr;
+
+typedef struct pseudo_tcphdr{
+    uint32_t saddr;          // Source IP Address (32-bit unsigned int)
+    uint32_t daddr;
+    uint8_t reserved;        // For padding
+    uint8_t protocol;
+    uint16_t tcphdr_len;
+} pseudo_tcphdr;
+
 tcphdr *create_tcphdr(){
     // src port, dst port from where? Can do a for loop
     tcphdr *t = malloc(sizeof(tcphdr));
@@ -92,7 +105,21 @@ void iphdr_checksum(iphdr *ip){ // One compliment's algorithm
     uint16_t lower = (total & 0xffff); // Take lower half values
     
     upper+=lower;                // Add upper back to total
-    t->check = ~upper;
+    ip->check = ~upper;
+}
+
+void bridge_hdr(iphdr *ip, tcphdr *t){ // Create one header from tcp/ip
+    master_hdr *header = malloc(40 * sizeof(char)); // 40 byte header for tcp + ip
+    header->iphdr = ip;
+    header->tcphdr = t;
+}
+
+void pseudo_tcp_calc(master_hdr *m){
+    pseudo_tcphdr *ps = malloc(sizeof(pseudo_tcphdr));
+    ps->saddr = m->iphdr->saddr;
+    ps->daddr = m->iphdr->daddr;
+    ps->protocol = m->iphdr->protocol;
+    ps->tcphdr_len = 20;
 }
 
 int main(){
