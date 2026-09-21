@@ -67,11 +67,33 @@ iphdr *create_iphdr(int id_count){
     h->ttl = 64;
     h->protocol = 6;
     h->check = 0;
-    h->saddr = inet_pton(AF_INET, "10.0.0.2", &h->daddr); // error check if != -1
-    h->daddr = inet_pton(AF_INET, "192.168.4.33", &h->daddr); // error check if != -1
+    
+    if(inet_pton(AF_INET, "10.0.0.2", &h->saddr) != 1){
+         perror("Wrong SRC address assignment!\n");
+         exit(1);
+    };
+    
+    if(inet_pton(AF_INET, "192.168.4.33", &h->daddr) != 1){
+         perror("Wrong DEST address assignment!\n");
+         exit(1);
+    }
     return h;
 }
 
+void iphdr_checksum(iphdr *ip){ // One compliment's algorithm
+    uint32_t total = 0;         
+    uint16_t *t_bytes = (uint16_t*)ip; // 20 byte struct needs to be read by short
+    
+    for (int i = 0; i < 10; i++){      // Add all short bytes into total
+        total += t_bytes[i];           
+    }
+    
+    uint16_t upper = total >> 16;      // Take upper half values
+    uint16_t lower = (total & 0xffff); // Take lower half values
+    
+    upper+=lower;                // Add upper back to total
+    t->check = ~upper;
+}
 
 int main(){
 	struct sockaddr_in addr;
@@ -84,7 +106,7 @@ int main(){
 			exit(1);
 	    }
 	
-    // addr.sin_port = htons(i);
+        //addr.sin_port = htons(i);
         if(connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == 0){
             printf("Connected to port %d\n", i);
             close(fd);
