@@ -107,7 +107,7 @@ uint16_t checksum(void *ptr, int size){ // One compliment's algorithm
     return ~upper;
 }
 
-master_hdr bridge_hdr(iphdr *ip, tcphdr *t){ // Create one header from tcp/ip
+master_hdr *bridge_hdr(iphdr *ip, tcphdr *t){ // Create one header from tcp/ip
     master_hdr *header = malloc(40 * sizeof(char)); // 40 byte header for tcp + ip
     header->iphdr = ip;
     header->tcphdr = t;
@@ -119,22 +119,34 @@ pseudo_tcphdr *pseudo_tcp_calc(master_hdr *m){
     ps->saddr = m->iphdr->saddr;
     ps->daddr = m->iphdr->daddr;
     ps->protocol = m->iphdr->protocol;
+    ps->reserved = 0;
     ps->tcphdr_len = htons(20);
+    return ps;
+}
+
+void handle_error(const char *msg) {
+    perror(msg); // Print custom message followed by the human-readable system error
+    exit(EXIT_FAILURE);
 }
 
 int main(){
 	//struct sockaddr_in addr;
 	//addr.sin_family = AF_INET;
 	//addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    int fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW); // Create socket
-    int id_count = 0;
-    iphdr *iphdr = create_iphdr(id_count++);
-    tcphdr *tcphdr = create_tcphdr();
-    ip->check = checksum(iphdr,sizeof(iphdr));
-    master_hdr = bridge_hdr(ip, tcphdr);
-    pseudo_tcphdr *ps = pseudo_tcp_calc(master_hdr); 
-    tcphdr->th_sum = checksum(ps,sizeof(pseudo_tcphdr));
-    
+    int fd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);    // Create socket
+    if (fd < 0){
+        handle_error("Could not open socket!\n");
+    }
+    int id_count = 0;                                   // Initiate packet count; Used for packet tracking (fragmentation)
+    iphdr *iphdr = create_iphdr(id_count++);            // Initializing IP header
+    tcphdr *tcphdr = create_tcphdr();                   // Initialzing TCP header
+    iphdr->check = checksum(iphdr,sizeof(iphdr));       // Calculating IP header checksum value
+    master_hdr *master_hdr = bridge_hdr(iphdr, tcphdr); // Combining IP/TCP headers for one packet header
+    pseudo_tcphdr *ps = pseudo_tcp_calc(master_hdr);    // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
+    tcphdr->th_sum = checksum(ps,sizeof(pseudo_tcphdr));// Calculating TCP header checksum 
+
+    ssize_t sendto(fd, const void buf[.len], size_t len, int flags,
+             const struct sockaddr *dest_addr, socklen_t addrlen);    
     /*
     for (int i = 1024; i < 2070; i++){
 		int fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
