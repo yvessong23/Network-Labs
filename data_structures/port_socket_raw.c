@@ -54,6 +54,11 @@ typedef struct pseudo_tcphdr{
     uint16_t tcphdr_len;
 } pseudo_tcphdr;
 
+void handle_error(const char *msg) {
+    perror(msg); // Print custom message followed by the human-readable system error
+    exit(EXIT_FAILURE);
+}
+
 tcphdr *create_tcphdr(){
     // src port, dst port from where? Can do a for loop
     tcphdr *t = malloc(sizeof(tcphdr));
@@ -82,13 +87,11 @@ iphdr *create_iphdr(int id_count){
     h->check = 0;
     
     if(inet_pton(AF_INET, "10.0.0.2", &h->saddr) != 1){
-         perror("Wrong SRC address assignment!\n");
-         exit(1);
+         handle_error("Wrong SRC address assignment!\n");
     };
     
     if(inet_pton(AF_INET, "192.168.4.33", &h->daddr) != 1){
-         perror("Wrong DEST address assignment!\n");
-         exit(1);
+         handle_error("Wrong DEST address assignment!\n");
     }
     return h;
 }
@@ -124,16 +127,8 @@ pseudo_tcphdr *pseudo_tcp_calc(master_hdr *m){
     return ps;
 }
 
-void handle_error(const char *msg) {
-    perror(msg); // Print custom message followed by the human-readable system error
-    exit(EXIT_FAILURE);
-}
-
 int main(){
-	//struct sockaddr_in addr;
-	//addr.sin_family = AF_INET;
-	//addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    int fd = socket(AF_INET, SOCK_RAW, IPPROTO_TCP);    // Create socket
+    int fd = socket(AF_INET, SOCK_RAW ,IPPROTO_RAW);
     if (fd < 0){
         handle_error("Could not open socket!\n");
     }
@@ -144,9 +139,15 @@ int main(){
     master_hdr *master_hdr = bridge_hdr(iphdr, tcphdr); // Combining IP/TCP headers for one packet header
     pseudo_tcphdr *ps = pseudo_tcp_calc(master_hdr);    // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
     tcphdr->th_sum = checksum(ps,sizeof(pseudo_tcphdr));// Calculating TCP header checksum 
-
-    ssize_t sendto(fd, const void buf[.len], size_t len, int flags,
-             const struct sockaddr *dest_addr, socklen_t addrlen);    
+    
+    struct sockaddr_in addr;
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = iphdr->saddr;
+    addr.sin_port = tcphdr->dst_port;
+    ssize_t send = sendto(fd, master_hdr, sizeof(master_hdr), 0, // How do I know my packet sent?
+             (struct sockaddr*)&addr, sizeof(struct sockaddr_in));    
+    if (send < 0) handle_error("Could not send packets"); 
+    
     /*
     for (int i = 1024; i < 2070; i++){
 		int fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
