@@ -93,7 +93,7 @@ iphdr *create_iphdr(int id_count){
     return h;
 }
 
-void checksum(void *ptr, int size){ // One compliment's algorithm
+uint16_t checksum(void *ptr, int size){ // One compliment's algorithm
     uint32_t total = 0;         
     uint16_t *t_bytes = (uint16_t*)ptr; // 20 or 12.. or 250 byte struct needs to be read by short
    
@@ -103,18 +103,18 @@ void checksum(void *ptr, int size){ // One compliment's algorithm
     
     uint16_t upper = total >> 16;      // Take upper half values
     uint16_t lower = (total & 0xffff); // Take lower half values
-    
     upper+=lower;                // Add upper back to total
-    ip->check = ~upper;
+    return ~upper;
 }
 
-void bridge_hdr(iphdr *ip, tcphdr *t){ // Create one header from tcp/ip
+master_hdr bridge_hdr(iphdr *ip, tcphdr *t){ // Create one header from tcp/ip
     master_hdr *header = malloc(40 * sizeof(char)); // 40 byte header for tcp + ip
     header->iphdr = ip;
     header->tcphdr = t;
+    return header;
 }
 
-void pseudo_tcp_calc(master_hdr *m){
+pseudo_tcphdr *pseudo_tcp_calc(master_hdr *m){
     pseudo_tcphdr *ps = malloc(sizeof(pseudo_tcphdr));
     ps->saddr = m->iphdr->saddr;
     ps->daddr = m->iphdr->daddr;
@@ -123,16 +123,26 @@ void pseudo_tcp_calc(master_hdr *m){
 }
 
 int main(){
-	struct sockaddr_in addr;
+	//struct sockaddr_in addr;
 	//addr.sin_family = AF_INET;
 	//addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-	for (int i = 1024; i < 2070; i++){
+    int fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW); // Create socket
+    int id_count = 0;
+    iphdr *iphdr = create_iphdr(id_count++);
+    tcphdr *tcphdr = create_tcphdr();
+    ip->check = checksum(iphdr,sizeof(iphdr));
+    master_hdr = bridge_hdr(ip, tcphdr);
+    pseudo_tcphdr *ps = pseudo_tcp_calc(master_hdr); 
+    tcphdr->th_sum = checksum(ps,sizeof(pseudo_tcphdr));
+    
+    /*
+    for (int i = 1024; i < 2070; i++){
 		int fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
 		if (fd < 0){
 			perror("Could not open socket!\n");
 			exit(1);
 	    }
-	
+        	
         //addr.sin_port = htons(i);
         if(connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == 0){
             printf("Connected to port %d\n", i);
@@ -141,4 +151,5 @@ int main(){
             close(fd);
         }
     }
+    */
 }
