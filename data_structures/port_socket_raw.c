@@ -93,12 +93,12 @@ iphdr *create_iphdr(int id_count){
     return h;
 }
 
-void iphdr_checksum(iphdr *ip){ // One compliment's algorithm
+void checksum(void *ptr, int size){ // One compliment's algorithm
     uint32_t total = 0;         
-    uint16_t *t_bytes = (uint16_t*)ip; // 20 byte struct needs to be read by short
-    
-    for (int i = 0; i < 10; i++){      // Add all short bytes into total
-        total += t_bytes[i];           
+    uint16_t *t_bytes = (uint16_t*)ptr; // 20 or 12.. or 250 byte struct needs to be read by short
+   
+    for (int i = 0; i < size; i++){
+        total+=t_bytes[i];
     }
     
     uint16_t upper = total >> 16;      // Take upper half values
@@ -119,7 +119,7 @@ void pseudo_tcp_calc(master_hdr *m){
     ps->saddr = m->iphdr->saddr;
     ps->daddr = m->iphdr->daddr;
     ps->protocol = m->iphdr->protocol;
-    ps->tcphdr_len = 20;
+    ps->tcphdr_len = htons(20);
 }
 
 int main(){
