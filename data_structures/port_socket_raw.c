@@ -88,54 +88,15 @@ iphdr create_iphdr(int id_count){
     h.protocol = 6;
     h.check = 0;
 
-    if(inet_pton(AF_INET, "192.168.4.1", &h.saddr) != 1){
+    if(inet_pton(AF_INET, "192.168.4.22", &h.saddr) != 1){
          handle_error("Wrong SRC address assignment!\n");
     };
 
-    if(inet_pton(AF_INET, "192.168.4.63", &h.daddr) != 1){
+    if(inet_pton(AF_INET, "192.168.4.37", &h.daddr) != 1){
          handle_error("Wrong DEST address assignment!\n");
     }
     return h;
 }
-
-/*
-tcphdr *create_tcphdr(){
-    // src port, dst port from where? Can do a for loop
-    tcphdr *t = malloc(sizeof(tcphdr));
-    t->src_port = htons(1024 + (rand() % 64000));
-    t->dst_port = htons(1024 + (rand() % 64000));
-    t->seq = htonl(1024 + (rand() % 64000));
-    t->ack = 0;
-    t->th_x2 = 0;
-    t->flags = TH_SYN;
-    t->th_win = htons(64000);
-    t->th_sum = 0;
-    t->th_urp = 0;
-    return t;
-}
-
-iphdr *create_iphdr(int id_count){ 
-    iphdr *h = malloc(sizeof(iphdr));
-    h->version = 4;
-    h->ihl = 5;
-    h->tos = 0;
-    h->tot_len = 40;
-    h->id = id_count;
-    h->frag_off = 0;
-    h->ttl = 64;
-    h->protocol = 6;
-    h->check = 0;
-    
-    if(inet_pton(AF_INET, "10.0.0.2", &h->saddr) != 1){
-         handle_error("Wrong SRC address assignment!\n");
-    };
-    
-    if(inet_pton(AF_INET, "192.168.4.33", &h->daddr) != 1){
-         handle_error("Wrong DEST address assignment!\n");
-    }
-    return h;
-}
-*/
 
 uint16_t checksum(void *ptr, int size){ // One compliment's algorithm
     uint32_t total = 0;         
@@ -169,7 +130,7 @@ pseudo_tcphdr *pseudo_tcp_calc(master_hdr m){
 }
 
 int main(){
-    int fd = socket(AF_INET, SOCK_RAW ,IPPROTO_RAW);
+    int fd = socket(AF_INET,SOCK_RAW,IPPROTO_RAW);
     if (fd < 0){
         handle_error("Could not open socket!\n");
     }
@@ -184,30 +145,23 @@ int main(){
     
     struct sockaddr_in addr;
 	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = iphdr.saddr;
+	addr.sin_addr.s_addr = iphdr.daddr;
     addr.sin_port = tcphdr.dst_port;
-    size_t pop = sizeof(struct master_hdr);
-    printf("Number of bytes sent: %ld\n", pop);
     ssize_t send = sendto(fd, &master_hdr, sizeof(struct master_hdr), 0, // How do I know my packet sent?
              (struct sockaddr*)&addr, sizeof(struct sockaddr_in));    
     if (send < 0) handle_error("Could not send packets"); 
-    //printf("Number of bytes sent: %ld\n", send);
+    else printf("Sent %ld bytes to %s\n", send, inet_ntoa(addr.sin_addr));
 
-    /*
-    for (int i = 1024; i < 2070; i++){
-		int fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-		if (fd < 0){
-			perror("Could not open socket!\n");
-			exit(1);
-	    }
-        	
-        //addr.sin_port = htons(i);
-        if(connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == 0){
-            printf("Connected to port %d\n", i);
-            close(fd);
-        } else {
-            close(fd);
-        }
-    }
-    */
+    // How do you receive information? Protocol 255 (IPPROTO_RAW) cannot receive?
+    int recv_fd = socket(AF_INET,SOCK_RAW,IPPROTO_TCP);
+    if (recv_fd < 0){
+        handle_error("Could not open recv socket!\n");
+    }    
+    
+    char recv_buff[100];
+    ssize_t recv = recvfrom(recv_fd, &recv_buff, sizeof(recv_buff), 0, // How do I know my packet sent?
+             NULL, 0);
+
+    if (recv < 0) handle_error("Could not receive packets");
+    else printf("Received %ld bytes to %s\n", recv, inet_ntoa(addr.sin_addr));
 }

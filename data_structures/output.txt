@@ -1,0 +1,25 @@
+PING 192.168.4.63 (192.168.4.63) 56(84) bytes of data.
+
+--- 192.168.4.63 ping statistics ---
+10 packets transmitted, 0 received, 100% packet loss, time 9222ms
+
+ Unreachable
+From 192.168.4.68 icmp_seq=10 Destination Host Unreachab
+--
+--- 192.168.4.200 ping statistics ---
+10 packets transmitted, 0 received, +3 errors, 100% packet loss, time 9219ms
+--- 192.168.4.238 ping statistics ---
+10 packets transmitt
+--- 192.168.4.235 ping statistics ---
+10 packets transmitted, 0 received, +6 errors, 100% packet loss, time 9221ms
+pipe 3
+received, +7 errors, 100% packet loss, time 9223ms
+pipe 4
+.168.4.230 ping statistics ---
+10 packets transmitted, 0 received, +9 errors, 100% packet loss, time 9218ms
+pipe 4
+
+received, +10 errors, 100% packet loss, time 9215ms
+pipe 3
+ min/avg/max/mdev = 0.022/0.053/0.079/0.018 ms
+
