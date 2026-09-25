@@ -23,7 +23,7 @@ typedef struct iphdr {
 
  typedef struct tcphdr{
     uint16_t src_port;      /* source port */
-    uint16_t dst_port;     /* destination port */
+    uint16_t dst_port;      /* destination port */
     uint32_t seq;           /* sequence number */
     uint32_t ack;           /* acknowledgement number */
     uint8_t th_x2:4;        /* (unused) */
@@ -131,8 +131,14 @@ pseudo_tcphdr *pseudo_tcp_calc(master_hdr m){
 
 void print_ip(char *buffer){
     for (int i = 0; i < 20; i++){
-         printf("Here was the payload that arrived: %02X \n", (unsigned char)buffer[i]);
+         printf("Here was the IP payload that arrived: %02X \n", (unsigned char)buffer[i]);
     } 
+}
+
+void print_tcp(char *buffer){
+    for (int i = 20; i < 40; i++){
+         printf("Here was the TCP payload that arrived: %02X \n", (unsigned char)buffer[i]);
+    }
 }
 
 int main(){
@@ -172,5 +178,6 @@ int main(){
     if (recv < 0) handle_error("Could not receive packets");
     else printf("Received %ld bytes from %s\n", recv, inet_ntoa(destaddr));
     print_ip(recv_buff);
+    print_tcp(recv_buff);    
     free(ps);
 }
