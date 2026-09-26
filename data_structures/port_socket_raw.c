@@ -159,7 +159,7 @@ int main(){
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = iphdr.daddr;
     addr.sin_port = tcphdr.dst_port;
-    ssize_t send = sendto(fd, &master_hdr, sizeof(struct master_hdr), 0, // How do I know my packet sent?
+    ssize_t send = sendto(fd, &master_hdr, sizeof(struct master_hdr), 0,
         (struct sockaddr*)&addr, sizeof(struct sockaddr_in));    
     if (send < 0) handle_error("Could not send packets"); 
     else printf("Sent %ld bytes to %s\n", send, inet_ntoa(addr.sin_addr));
