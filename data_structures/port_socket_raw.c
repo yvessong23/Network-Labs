@@ -88,7 +88,7 @@ iphdr create_iphdr(int id_count){
     h.protocol = 6;
     h.check = 0;
 
-    if(inet_pton(AF_INET, "192.168.4.22", &h.saddr) != 1){
+    if(inet_pton(AF_INET, "192.168.4.68", &h.saddr) != 1){
          handle_error("Wrong SRC address assignment!\n");
     };
 
@@ -136,7 +136,7 @@ void print_ip(char *buffer){
 }
 
 void print_tcp(char *buffer){
-    for (int i = 20; i < 40; i++){
+    for (int i = 20; i < 80; i++){
          printf("Here was the TCP payload that arrived: %02X \n", (unsigned char)buffer[i]);
     }
 }
