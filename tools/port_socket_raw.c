@@ -63,8 +63,8 @@ tcphdr create_tcphdr(){
     // src port, dst port from where? Can do a for loop
     tcphdr t;// = malloc(sizeof(tcphdr));
     memset(&t, 0, sizeof(t));
-    t.src_port = htons(64000);
-    t.dst_port = htons(62225);
+    t.src_port = htons(64222);
+    t.dst_port = htons(63232);
     t.seq = htonl(1024 + (rand() % 64000));
     t.ack = 0;
     t.th_x2 = 0;
@@ -138,8 +138,26 @@ void print_ip(char *buffer){
 }
 
 void print_tcp(char *buffer){
-    for (int i = 20; i < 80; i++){
+    for (int i = 20; i < 40; i++){
          printf("Here was the TCP payload that arrived: %02X \n", (unsigned char)buffer[i]);
+    }
+}
+
+void packet_filter(char *buffer){
+    iphdr *r_ip = (struct iphdr *)buffer;
+    tcphdr *r_hdr = (struct tcphdr *)buffer + 20; 
+    //printf("Hey this is the length of the iphdr %d\n", r_ip->ihl);
+    //printf("Version of receiving headers %d\n", r_ip->version);
+    //printf("Total packet length %d\n", ntohs(r_ip->tot_len));
+    char src[INET_ADDRSTRLEN];                         // INET_ADDSTRLEN = 16 bytes
+    if(inet_ntop(AF_INET, &r_ip->saddr, src, sizeof(src)) == NULL){
+         handle_error("Could not translate src address to string!\n");
+    };
+    printf("Source address %s", src); 
+    if (src == "192.168.4.34"){
+        printf("This packet comes from %s", src);
+    } else {
+        printf("Nah the packet you expected didnt arrive\n");
     }
 }
 
@@ -177,8 +195,10 @@ int main(){
     struct in_addr destaddr;
     destaddr.s_addr = iphdr.daddr;
     if (recv < 0) handle_error("Could not receive packets");
-    else printf("Received %ld bytes from %s\n", recv, inet_ntoa(destaddr));
-    print_ip(recv_buff);
-    print_tcp(recv_buff);    
+    //else printf("Received %ld bytes from %s\n", recv, inet_ntoa(destaddr));
+
+    //print_ip(recv_buff);
+    //print_tcp(recv_buff);    
+    packet_filter(recv_buff); 
     free(ps);
 }
