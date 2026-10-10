@@ -51,6 +51,7 @@ typedef struct pseudo_tcphdr{
     uint8_t reserved;        // For padding
     uint8_t protocol;
     uint16_t tcphdr_len;
+    tcphdr t_hdr;
 } pseudo_tcphdr;
 
 void handle_error(const char *msg) {
@@ -63,7 +64,7 @@ tcphdr create_tcphdr(){
     tcphdr t;// = malloc(sizeof(tcphdr));
     memset(&t, 0, sizeof(t));
     t.src_port = htons(64000);
-    t.dst_port = htons(63333);
+    t.dst_port = htons(62225);
     t.seq = htonl(1024 + (rand() % 64000));
     t.ack = 0;
     t.th_x2 = 0;
@@ -126,6 +127,7 @@ pseudo_tcphdr *pseudo_tcp_calc(master_hdr m){
     ps->protocol = m.iphdr.protocol;
     ps->reserved = 0;
     ps->tcphdr_len = htons(20);
+    ps->t_hdr = m.tcphdr;
     return ps;
 }
 
@@ -150,10 +152,9 @@ int main(){
     int id_count = 0;                                  // Initiate packet count; Used for packet tracking (fragmentation)
     iphdr iphdr = create_iphdr(id_count++);            // Initializing IP header
     tcphdr tcphdr = create_tcphdr();                   // Initialzing TCP header
-    iphdr.check = checksum(&iphdr,sizeof(iphdr));      // Calculating IP header checksum value
     master_hdr master_hdr = bridge_hdr(iphdr, tcphdr); // Combining IP/TCP headers for one packet header
     pseudo_tcphdr *ps = pseudo_tcp_calc(master_hdr);   // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
-    tcphdr.th_sum = checksum(ps,sizeof(pseudo_tcphdr));// Calculating TCP header checksum 
+    master_hdr.tcphdr.th_sum = checksum(ps,sizeof(pseudo_tcphdr));// Calculating TCP header checksum 
     
     struct sockaddr_in addr;
 	addr.sin_family = AF_INET;
