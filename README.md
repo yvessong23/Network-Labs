@@ -10,10 +10,8 @@ I'll be building a series of **real-world, enterprise-grade labs** focused on:
 
 ---
 
-## 🏰 Current Lab — **Black Friday: Zero Trust Crisis Simulation**
-
-My latest and most complete lab is a 12-device enterprise network simulating a real security crisis response environment.
-
-> Goal: **No lateral movement. Every flow inspected. One firewall choke point.**
-
-📁 Lab folder: [`/BlackFriday`](./BlackFriday)
+## 🏰 Current Lab — Infrastructure work, currently focusing on Socket Prog & server architecture
+Device:
+Rasp Pi v4
+OS: Debian 1:6.18.39-1+rpt1 (2026-07-29) aarch64 GNU/Linux
+Cores: 4 Multi-process
