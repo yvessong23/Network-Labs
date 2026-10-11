@@ -1,5 +1,0 @@
-#Start with the group name
-servers:
-   hosts:    # Define nodes you want to manage
-      mypi:  # Define node 
-         ansible_host: 10.0.0.1   # Define IP of node, ansible connects
