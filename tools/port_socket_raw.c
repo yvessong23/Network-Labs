@@ -63,8 +63,8 @@ tcphdr create_tcphdr(){
     // src port, dst port from where? Can do a for loop
     tcphdr t;// = malloc(sizeof(tcphdr));
     memset(&t, 0, sizeof(t));
-    t.src_port = htons(64222);
-    t.dst_port = htons(63232);
+    t.src_port = htons(54223);
+    t.dst_port = htons(54383);
     t.seq = htonl(1024 + (rand() % 64000));
     t.ack = 0;
     t.th_x2 = 0;
@@ -93,7 +93,7 @@ iphdr create_iphdr(int id_count){
          handle_error("Wrong SRC address assignment!\n");
     };
 
-    if(inet_pton(AF_INET, "192.168.4.34", &h.daddr) != 1){
+    if(inet_pton(AF_INET, "192.168.4.30", &h.daddr) != 1){
          handle_error("Wrong DEST address assignment!\n");
     }
     return h;
@@ -143,19 +143,21 @@ void print_tcp(char *buffer){
     }
 }
 
-void packet_filter(char *buffer){
+int packet_filter(char *buffer, master_hdr *m){
     iphdr *r_ip = (struct iphdr *)buffer;
     tcphdr *r_hdr = (struct tcphdr *)buffer + 20; 
     //printf("Hey this is the length of the iphdr %d\n", r_ip->ihl);
     //printf("Version of receiving headers %d\n", r_ip->version);
     //printf("Total packet length %d\n", ntohs(r_ip->tot_len));
     char src[INET_ADDRSTRLEN];                         // INET_ADDSTRLEN = 16 bytes
-    if(inet_ntop(AF_INET, &r_ip->saddr, src, sizeof(src)) == NULL){
+    if(inet_ntop(AF_INET, &r_ip->daddr, src, sizeof(src)) == NULL){
          handle_error("Could not translate src address to string!\n");
     };
-    printf("Source address %s", src); 
-    if (src == "192.168.4.34"){
-        printf("This packet comes from %s", src);
+    
+    printf("The incoming packet's dest address was %s\n", src); 
+    if (r_ip->saddr == m->iphdr.daddr){
+        printf("This packet comes from %s, it worked!!!!\n", src);
+        return 1;
     } else {
         printf("Nah the packet you expected didnt arrive\n");
     }
@@ -184,21 +186,26 @@ int main(){
     else printf("Sent %ld bytes to %s\n", send, inet_ntoa(addr.sin_addr));
 
     // How do you receive information? Protocol 255 (IPPROTO_RAW) cannot receive?
-    int recv_fd = socket(AF_INET,SOCK_RAW,IPPROTO_TCP);
-    if (recv_fd < 0){
-        handle_error("Could not open recv socket!\n");
-    }    
     
-    char recv_buff[100];
-    ssize_t recv = recvfrom(recv_fd, &recv_buff, 
-        sizeof(recv_buff), 0, NULL, 0);
-    struct in_addr destaddr;
-    destaddr.s_addr = iphdr.daddr;
-    if (recv < 0) handle_error("Could not receive packets");
-    //else printf("Received %ld bytes from %s\n", recv, inet_ntoa(destaddr));
-
-    //print_ip(recv_buff);
-    //print_tcp(recv_buff);    
-    packet_filter(recv_buff); 
+    int i = 0;
+    while (i < 10){
+        int recv_fd = socket(AF_INET,SOCK_RAW,IPPROTO_TCP);
+        if (recv_fd < 0){
+            handle_error("Could not open recv socket!\n");
+        }    
+        
+        char recv_buff[100];
+        ssize_t recv = recvfrom(recv_fd, &recv_buff, 
+            sizeof(recv_buff), 0, NULL, 0);
+        struct in_addr destaddr;
+        destaddr.s_addr = iphdr.daddr;
+        if (recv < 0) handle_error("Could not receive packets\n");
+        //else printf("Received %ld bytes from %s\n", recv, inet_ntoa(destaddr));
+        i++;
+        //print_ip(recv_buff);
+        //print_tcp(recv_buff);    
+        int poke = packet_filter(recv_buff, &master_hdr); 
+        if (poke == 1) break;
+    }
     free(ps);
 }
