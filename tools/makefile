@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wextra -Wall
+CFLAGS = -g -02 -Wextra -Wall -fdiagnostics-color=always
 TARGET = ppp
 SRC = port_socket_raw.c
 
@@ -14,7 +14,7 @@ run: setcap
 
 memcheck: $(TARGET)
 	-sudo setcap -r ./$(TARGET)
-	sudo valgrind --tool=memcheck --track-origins=yes ./$(TARGET)
+	sudo valgrind --track-origins=yes ./$(TARGET)
 
 clean:
 	rm -f ppp

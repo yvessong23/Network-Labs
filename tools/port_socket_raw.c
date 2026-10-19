@@ -41,8 +41,8 @@ typedef struct iphdr {
 } tcphdr;
 
 typedef struct master_hdr{
-    iphdr iphdr;
-    tcphdr tcphdr;
+    iphdr *iphdr;
+    tcphdr *tcphdr;
 } master_hdr;
 
 typedef struct pseudo_tcphdr{
@@ -51,7 +51,7 @@ typedef struct pseudo_tcphdr{
     uint8_t reserved;        // For padding
     uint8_t protocol;
     uint16_t tcphdr_len;
-    tcphdr t_hdr;
+    tcphdr *t_hdr;
 } pseudo_tcphdr;
 
 void handle_error(const char *msg) {
@@ -59,41 +59,41 @@ void handle_error(const char *msg) {
     exit(EXIT_FAILURE);
 }
 
-tcphdr create_tcphdr(){
+tcphdr *create_tcphdr(){
     // src port, dst port from where? Can do a for loop
-    tcphdr t;// = malloc(sizeof(tcphdr));
-    memset(&t, 0, sizeof(t));
-    t.src_port = htons(54223);
-    t.dst_port = htons(54383);
-    t.seq = htonl(1024 + (rand() % 64000));
-    t.ack = 0;
-    t.th_x2 = 0;
-    t.th_off = 5;
-    t.flags = TH_SYN;
-    t.th_win = htons(64000);
-    t.th_sum = 0;
-    t.th_urp = 0;
+    tcphdr *t = malloc(sizeof(tcphdr));
+    memset(t, 0, sizeof(t));
+    t->src_port = htons(54223);
+    t->dst_port = htons(54383);
+    t->seq = htonl(1024 + (rand() % 64000));
+    t->ack = 0;
+    t->th_x2 = 0;
+    t->th_off = 5;
+    t->flags = TH_SYN;
+    t->th_win = htons(64000);
+    t->th_sum = 0;
+    t->th_urp = 0;
     return t;
 }
 
-iphdr create_iphdr(int id_count){
-    iphdr h;// = malloc(sizeof(iphdr));
-    memset(&h, 0, sizeof(h));
-    h.ihl = 5;
-    h.version = 4;
-    h.tos = 0;
-    h.tot_len = htons(40);
-    h.id = htons(id_count);
-    h.frag_off = 0;
-    h.ttl = 64;
-    h.protocol = 6;
-    h.check = 0;
+iphdr *create_iphdr(){
+    iphdr *h = malloc(sizeof(iphdr));
+    memset(h, 0, sizeof(h));
+    h->ihl = 5;
+    h->version = 4;
+    h->tos = 0;
+    h->tot_len = htons(40);
+    h->id = 0;
+    h->frag_off = 0;
+    h->ttl = 64;
+    h->protocol = 6;
+    h->check = 0;
 
-    if(inet_pton(AF_INET, "192.168.4.68", &h.saddr) != 1){
+    if(inet_pton(AF_INET, "192.168.4.33", &h->saddr) != 1){ // Need to automate
          handle_error("Wrong SRC address assignment!\n");
     };
 
-    if(inet_pton(AF_INET, "192.168.4.30", &h.daddr) != 1){
+    if(inet_pton(AF_INET, "192.168.4.30", &h->daddr) != 1){ // Need to automate
          handle_error("Wrong DEST address assignment!\n");
     }
     return h;
@@ -113,21 +113,21 @@ uint16_t checksum(void *ptr, ssize_t size){ // One compliment's algorithm
     return ~upper;
 }
 
-master_hdr bridge_hdr(iphdr ip, tcphdr t){ // Create one header from tcp/ip
-    master_hdr header; //= malloc(40 * sizeof(char)); // 40 byte header for tcp + ip
-    header.iphdr = ip;
-    header.tcphdr = t;
+master_hdr *bridge_hdr(iphdr *ip, tcphdr *t){ // Create one header from tcp/ip
+    master_hdr *header = malloc(sizeof(ip) + sizeof(t)); // 40 byte header for tcp + ip
+    header->iphdr = ip;
+    header->tcphdr = t;
     return header;
 }
 
-pseudo_tcphdr *pseudo_tcp_calc(master_hdr m){
+pseudo_tcphdr *pseudo_tcp_calc(master_hdr *m){
     pseudo_tcphdr *ps = malloc(sizeof(pseudo_tcphdr));
-    ps->saddr = m.iphdr.saddr;
-    ps->daddr = m.iphdr.daddr;
-    ps->protocol = m.iphdr.protocol;
+    ps->saddr = m->iphdr->saddr;
+    ps->daddr = m->iphdr->daddr;
+    ps->protocol = m->iphdr->protocol;
     ps->reserved = 0;
     ps->tcphdr_len = htons(20);
-    ps->t_hdr = m.tcphdr;
+    ps->t_hdr = m->tcphdr;
     return ps;
 }
 
@@ -155,7 +155,7 @@ int packet_filter(char *buffer, master_hdr *m){
     };
     
     printf("The incoming packet's dest address was %s\n", src); 
-    if (r_ip->saddr == m->iphdr.daddr){
+    if (r_ip->saddr == m->iphdr->daddr){
         printf("This packet comes from %s, it worked!!!!\n", src);
         return 1;
     } else {
@@ -163,49 +163,60 @@ int packet_filter(char *buffer, master_hdr *m){
     }
 }
 
+void create_header(iphdr *ip, tcphdr *t, master_hdr *m, pseudo_tcphdr *ps){ // Recreate header to recalculate checksum
+    ip = create_iphdr();            
+    t = create_tcphdr();                       
+    m = bridge_hdr(ip, t);
+    ps = pseudo_tcp_calc(m);                      // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
+    m->tcphdr->th_sum = checksum(ps,sizeof(pseudo_tcphdr));// Calculating TCP header checksum 
+}
+
 int main(){
+    iphdr *ip;           // Initializing IP header
+    tcphdr *t;         // Initialzing TCP header
+    master_hdr *m; // Combining IP/TCP headers for one packet header
+    pseudo_tcphdr *ps;      // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
+    create_header(ip, t, m, ps);    
+    struct sockaddr_in addr;
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = ip->daddr;
+    addr.sin_port = t->dst_port;
+
+    // Start of sending thread
     int fd = socket(AF_INET,SOCK_RAW,IPPROTO_RAW);
     if (fd < 0){
         handle_error("Could not open socket!\n");
     }
     
-    int id_count = 0;                                  // Initiate packet count; Used for packet tracking (fragmentation)
-    iphdr iphdr = create_iphdr(id_count++);            // Initializing IP header
-    tcphdr tcphdr = create_tcphdr();                   // Initialzing TCP header
-    master_hdr master_hdr = bridge_hdr(iphdr, tcphdr); // Combining IP/TCP headers for one packet header
-    pseudo_tcphdr *ps = pseudo_tcp_calc(master_hdr);   // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
-    master_hdr.tcphdr.th_sum = checksum(ps,sizeof(pseudo_tcphdr));// Calculating TCP header checksum 
-    
-    struct sockaddr_in addr;
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = iphdr.daddr;
-    addr.sin_port = tcphdr.dst_port;
-    ssize_t send = sendto(fd, &master_hdr, sizeof(struct master_hdr), 0,
+    ssize_t send = sendto(fd, &m, sizeof(struct master_hdr), 0,
         (struct sockaddr*)&addr, sizeof(struct sockaddr_in));    
     if (send < 0) handle_error("Could not send packets"); 
     else printf("Sent %ld bytes to %s\n", send, inet_ntoa(addr.sin_addr));
 
     // How do you receive information? Protocol 255 (IPPROTO_RAW) cannot receive?
-    
+    // Start of receiving thread
     int i = 0;
     while (i < 10){
         int recv_fd = socket(AF_INET,SOCK_RAW,IPPROTO_TCP);
         if (recv_fd < 0){
             handle_error("Could not open recv socket!\n");
         }    
-        
+         
         char recv_buff[100];
-        ssize_t recv = recvfrom(recv_fd, &recv_buff, 
+        ssize_t recv_count = recvfrom(recv_fd, recv_buff, 
             sizeof(recv_buff), 0, NULL, 0);
         struct in_addr destaddr;
-        destaddr.s_addr = iphdr.daddr;
-        if (recv < 0) handle_error("Could not receive packets\n");
+        destaddr.s_addr = ip->daddr;
+        if (recv_count < 0) handle_error("Could not receive packets\n");
         //else printf("Received %ld bytes from %s\n", recv, inet_ntoa(destaddr));
-        i++;
         //print_ip(recv_buff);
         //print_tcp(recv_buff);    
-        int poke = packet_filter(recv_buff, &master_hdr); 
+        int poke = packet_filter(recv_buff, m); 
         if (poke == 1) break;
+        i++;
     }
+    free(ip);
+    free(m);
+    free(t);
     free(ps);
 }
