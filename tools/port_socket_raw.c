@@ -40,9 +40,9 @@ typedef struct iphdr {
     uint16_t th_urp;        /* urgent pointer */
 } tcphdr;
 
-typedef struct master_hdr{
-    iphdr *iphdr;
-    tcphdr *tcphdr;
+typedef struct master_hdr{ // Contiguous buffer for sendto()
+    iphdr iphdr;
+    tcphdr tcphdr;
 } master_hdr;
 
 typedef struct pseudo_tcphdr{
@@ -51,7 +51,7 @@ typedef struct pseudo_tcphdr{
     uint8_t reserved;        // For padding
     uint8_t protocol;
     uint16_t tcphdr_len;
-    tcphdr *t_hdr;
+    tcphdr t_hdr;
 } pseudo_tcphdr;
 
 void handle_error(const char *msg) {
@@ -89,11 +89,11 @@ iphdr *create_iphdr(){
     h->protocol = 6;
     h->check = 0;
 
-    if(inet_pton(AF_INET, "192.168.4.33", &h->saddr) != 1){ // Need to automate
+    if(inet_pton(AF_INET, "192.168.4.68", &h->saddr) != 1){ // Need to automate
          handle_error("Wrong SRC address assignment!\n");
     };
 
-    if(inet_pton(AF_INET, "192.168.4.30", &h->daddr) != 1){ // Need to automate
+    if(inet_pton(AF_INET, "192.168.4.1", &h->daddr) != 1){ // Need to automate
          handle_error("Wrong DEST address assignment!\n");
     }
     return h;
@@ -113,21 +113,21 @@ uint16_t checksum(void *ptr, ssize_t size){ // One compliment's algorithm
     return ~upper;
 }
 
-master_hdr *bridge_hdr(iphdr *ip, tcphdr *t){ // Create one header from tcp/ip
-    master_hdr *header = malloc(sizeof(ip) + sizeof(t)); // 40 byte header for tcp + ip
+master_hdr *bridge_hdr(iphdr ip, tcphdr t){ // Create one header from tcp/ip
+    master_hdr *header = malloc(sizeof(master_hdr)); // 40 byte header for tcp + ip
     header->iphdr = ip;
     header->tcphdr = t;
     return header;
 }
 
-pseudo_tcphdr *pseudo_tcp_calc(master_hdr *m){
+pseudo_tcphdr *pseudo_tcp_calc(iphdr ip, tcphdr t){
     pseudo_tcphdr *ps = malloc(sizeof(pseudo_tcphdr));
-    ps->saddr = m->iphdr->saddr;
-    ps->daddr = m->iphdr->daddr;
-    ps->protocol = m->iphdr->protocol;
+    ps->saddr = ip.saddr;
+    ps->daddr = ip.daddr;
+    ps->protocol = ip.protocol;
     ps->reserved = 0;
     ps->tcphdr_len = htons(20);
-    ps->t_hdr = m->tcphdr;
+    ps->t_hdr = t;
     return ps;
 }
 
@@ -150,53 +150,56 @@ int packet_filter(char *buffer, master_hdr *m){
     //printf("Version of receiving headers %d\n", r_ip->version);
     //printf("Total packet length %d\n", ntohs(r_ip->tot_len));
     char src[INET_ADDRSTRLEN];                         // INET_ADDSTRLEN = 16 bytes
-    if(inet_ntop(AF_INET, &r_ip->daddr, src, sizeof(src)) == NULL){
+    if(inet_ntop(AF_INET, &r_ip->saddr, src, sizeof(src)) == NULL){
          handle_error("Could not translate src address to string!\n");
     };
     
     printf("The incoming packet's dest address was %s\n", src); 
-    if (r_ip->saddr == m->iphdr->daddr){
+    if (r_ip->saddr == m->iphdr.daddr){
         printf("This packet comes from %s, it worked!!!!\n", src);
         return 1;
     } else {
-        printf("Nah the packet you expected didnt arrive\n");
+        printf("Nah the packet you expected didnt arrive, it came from %s\n", src);
     }
 }
 
-void create_header(iphdr *ip, tcphdr *t, master_hdr *m, pseudo_tcphdr *ps){ // Recreate header to recalculate checksum
+master_hdr *create_header(iphdr *ip, tcphdr *t, pseudo_tcphdr *ps){ // Recreate header to recalculate checksum
+    master_hdr *m;
     ip = create_iphdr();            
     t = create_tcphdr();                       
-    m = bridge_hdr(ip, t);
-    ps = pseudo_tcp_calc(m);                      // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
-    m->tcphdr->th_sum = checksum(ps,sizeof(pseudo_tcphdr));// Calculating TCP header checksum 
+    ps = pseudo_tcp_calc(*ip, *t);                      // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
+    t->th_sum = checksum(ps,sizeof(pseudo_tcphdr));// Calculating TCP header checksum 
+    m = bridge_hdr(*ip, *t);
+    return m;
 }
 
 int main(){
     iphdr *ip;           // Initializing IP header
     tcphdr *t;         // Initialzing TCP header
-    master_hdr *m; // Combining IP/TCP headers for one packet header
     pseudo_tcphdr *ps;      // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
-    create_header(ip, t, m, ps);    
+    master_hdr *m;
+    m = create_header(ip, t, ps);    
+    
     struct sockaddr_in addr;
 	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = ip->daddr;
-    addr.sin_port = t->dst_port;
+	addr.sin_addr.s_addr = m->iphdr.daddr;
+    addr.sin_port = m->tcphdr.dst_port;
 
     // Start of sending thread
     int fd = socket(AF_INET,SOCK_RAW,IPPROTO_RAW);
     if (fd < 0){
         handle_error("Could not open socket!\n");
     }
-    
-    ssize_t send = sendto(fd, &m, sizeof(struct master_hdr), 0,
+     
+    ssize_t send = sendto(fd, m, sizeof(struct master_hdr), 0,
         (struct sockaddr*)&addr, sizeof(struct sockaddr_in));    
     if (send < 0) handle_error("Could not send packets"); 
     else printf("Sent %ld bytes to %s\n", send, inet_ntoa(addr.sin_addr));
-
+    
     // How do you receive information? Protocol 255 (IPPROTO_RAW) cannot receive?
     // Start of receiving thread
     int i = 0;
-    while (i < 10){
+    while (i < 50){
         int recv_fd = socket(AF_INET,SOCK_RAW,IPPROTO_TCP);
         if (recv_fd < 0){
             handle_error("Could not open recv socket!\n");
@@ -215,8 +218,8 @@ int main(){
         if (poke == 1) break;
         i++;
     }
-    free(ip);
+    //free(ip);
+    //free(t);
+    //free(ps);
     free(m);
-    free(t);
-    free(ps);
 }
