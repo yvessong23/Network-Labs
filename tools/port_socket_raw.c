@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <ifaddrs.h>
 
 typedef struct iphdr {
     // These two share the first byte (8 bits total)
@@ -62,7 +63,7 @@ void handle_error(const char *msg) {
 tcphdr *create_tcphdr(){
     // src port, dst port from where? Can do a for loop
     tcphdr *t = malloc(sizeof(tcphdr));
-    memset(t, 0, sizeof(t));
+    memset(t, 0, sizeof(*t));
     t->src_port = htons(54223);
     t->dst_port = htons(54383);
     t->seq = htonl(1024 + (rand() % 64000));
@@ -78,7 +79,7 @@ tcphdr *create_tcphdr(){
 
 iphdr *create_iphdr(){
     iphdr *h = malloc(sizeof(iphdr));
-    memset(h, 0, sizeof(h));
+    memset(h, 0, sizeof(*h));
     h->ihl = 5;
     h->version = 4;
     h->tos = 0;
@@ -93,7 +94,7 @@ iphdr *create_iphdr(){
          handle_error("Wrong SRC address assignment!\n");
     };
 
-    if(inet_pton(AF_INET, "192.168.4.1", &h->daddr) != 1){ // Need to automate
+    if(inet_pton(AF_INET, "192.168.4.82", &h->daddr) != 1){ // Need to automate
          handle_error("Wrong DEST address assignment!\n");
     }
     return h;
@@ -131,6 +132,10 @@ pseudo_tcphdr *pseudo_tcp_calc(iphdr ip, tcphdr t){
     return ps;
 }
 
+uint32_t to_host(uint32_t addr){
+    return ntohl(addr);
+}
+
 void print_ip(char *buffer){
     for (int i = 0; i < 20; i++){
          printf("Here was the IP payload that arrived: %02X \n", (unsigned char)buffer[i]);
@@ -145,7 +150,7 @@ void print_tcp(char *buffer){
 
 int packet_filter(char *buffer, master_hdr *m){
     iphdr *r_ip = (struct iphdr *)buffer;
-    tcphdr *r_hdr = (struct tcphdr *)buffer + 20; 
+    //tcphdr *r_hdr = (struct tcphdr *)buffer + 20; 
     //printf("Hey this is the length of the iphdr %d\n", r_ip->ihl);
     //printf("Version of receiving headers %d\n", r_ip->version);
     //printf("Total packet length %d\n", ntohs(r_ip->tot_len));
@@ -165,8 +170,10 @@ int packet_filter(char *buffer, master_hdr *m){
 
 master_hdr *create_header(iphdr *ip, tcphdr *t, pseudo_tcphdr *ps){ // Recreate header to recalculate checksum
     master_hdr *m;
+    
     ip = create_iphdr();            
     t = create_tcphdr();                       
+    
     ps = pseudo_tcp_calc(*ip, *t);                      // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
     t->th_sum = checksum(ps,sizeof(pseudo_tcphdr));// Calculating TCP header checksum 
     m = bridge_hdr(*ip, *t);
@@ -178,6 +185,40 @@ int main(){
     tcphdr *t;         // Initialzing TCP header
     pseudo_tcphdr *ps;      // Calculating Pseudo TCP header for TCP checksum calc; needed both IP and TCP values to calculate
     master_hdr *m;
+    
+    struct ifaddrs *ifap; // To retrieve information about host IP
+    if(getifaddrs(&ifap) == -1){
+        handle_error("Unable to retrieve host information");
+    }
+    
+    for (struct ifaddrs *idx = ifap; idx != NULL; idx = idx->ifa_next){
+        uint32_t num_add = to_host(((struct sockaddr_in*)idx->ifa_addr)->sin_addr.s_addr);
+        if (idx->ifa_addr == NULL) continue;
+        //int family;
+        //family = idx->ifa_addr->sa_family; // Error handle?
+        if ((strcmp(idx->ifa_name, "wlan0") == 0) && idx->ifa_addr->sa_family == AF_INET){
+            uint32_t num_add = to_host(((struct sockaddr_in*)idx->ifa_addr)->sin_addr.s_addr);
+            printf("Here is the IP address %u\n", to_host(num_add)); 
+            //printf("The next IP is %u\n", num_add+1);
+            break;
+        }
+        
+        //printf("Here is the IP address %u\n", num_add); 
+        //printf("The next IP is %u\n", num_add+1);
+        //break;
+    }
+       
+        //int family;
+        //family = idx->ifa_addr->sa_family; // Error handle?
+        /* 
+        printf("%-8s %s (%d)\n",
+              idx->ifa_name,
+              (family == AF_PACKET) ? "AF_PACKET" :
+              (family == AF_INET) ? "AF_INET" :
+              (family == AF_INET6) ? "AF_INET6" : "???",
+              family);
+        */
+    
     m = create_header(ip, t, ps);    
     
     struct sockaddr_in addr;
@@ -194,8 +235,8 @@ int main(){
     ssize_t send = sendto(fd, m, sizeof(struct master_hdr), 0,
         (struct sockaddr*)&addr, sizeof(struct sockaddr_in));    
     if (send < 0) handle_error("Could not send packets"); 
-    else printf("Sent %ld bytes to %s\n", send, inet_ntoa(addr.sin_addr));
-    
+    //else printf("Sent %ld bytes to %s\n", send, inet_ntoa(addr.sin_addr));
+    printf("Sent %ld bytes to %u\n", send, to_host(addr.sin_addr.s_addr));  
     // How do you receive information? Protocol 255 (IPPROTO_RAW) cannot receive?
     // Start of receiving thread
     int i = 0;
@@ -218,8 +259,5 @@ int main(){
         if (poke == 1) break;
         i++;
     }
-    //free(ip);
-    //free(t);
-    //free(ps);
     free(m);
 }
